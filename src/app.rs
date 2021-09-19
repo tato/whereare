@@ -45,8 +45,14 @@ pub fn run() -> Result<(), Error> {
                 let render_ui_for_app_elements = |ui: &imgui::Ui| {
                     world.update_on_gui(ui);
                 };
-                gui.render(&window, encoder, render_target, context, render_ui_for_app_elements)
-                    .expect("gui.render() failed");
+                gui.render(
+                    &window,
+                    encoder,
+                    render_target,
+                    context,
+                    render_ui_for_app_elements,
+                )
+                .expect("gui.render() failed");
                 ()
             });
 

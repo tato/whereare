@@ -13,6 +13,9 @@ winit = { version="0.25", default-features=false }
 winit_input_helper = "0.10"
 pixels = "0.6"
 noise = "0.7"
+glam = "0.18"
+rand = "0.7"
+rand_chacha = "0.2"
 
 imgui = "0.7"
 imgui-wgpu = "0.17"

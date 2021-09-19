@@ -557,6 +557,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "525a3e490ba77b8e326fb67d4b44b4bd2f920f44d4cc73ccec50adc68e3bee34"
+
+[[package]]
 name = "glow"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1870,12 +1876,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "env_logger",
+ "glam",
  "imgui",
  "imgui-wgpu",
  "imgui-winit-support",
  "log",
  "noise",
  "pixels",
+ "rand",
+ "rand_chacha",
  "winit",
  "winit_input_helper",
 ]

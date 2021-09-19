@@ -1,5 +1,5 @@
 #![deny(clippy::all)]
-#![forbid(unsafe_code)]
+// #![forbid(unsafe_code)]
 
 use anyhow::Error;
 
