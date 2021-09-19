@@ -1,3 +1,4 @@
+use imgui::Ui;
 use pixels::{wgpu, PixelsContext};
 use std::time::Instant;
 
@@ -8,7 +9,6 @@ pub(crate) struct Gui {
     renderer: imgui_wgpu::Renderer,
     last_frame: Instant,
     last_cursor: Option<imgui::MouseCursor>,
-    _about_open: bool,
 }
 
 impl Gui {
@@ -57,7 +57,6 @@ impl Gui {
             renderer,
             last_frame: Instant::now(),
             last_cursor: None,
-            _about_open: true,
         }
     }
 
@@ -74,16 +73,14 @@ impl Gui {
     }
 
     /// Render Dear ImGui.
-    pub(crate) fn render<F>(
+    pub(crate) fn render(
         &mut self,
         window: &winit::window::Window,
         encoder: &mut wgpu::CommandEncoder,
         render_target: &wgpu::TextureView,
         context: &PixelsContext,
-        mut update_world_or_whatever_the_app_wants_xd: F,
-    ) -> imgui_wgpu::RendererResult<()> 
-        where F: FnMut(&imgui::Ui)
-    {
+        mut render_ui_for_app_elements: impl FnMut(&Ui),
+    ) -> imgui_wgpu::RendererResult<()> {
         // Start a new Dear ImGui frame and update the cursor
         let ui = self.imgui.frame();
 
@@ -92,21 +89,6 @@ impl Gui {
             self.last_cursor = mouse_cursor;
             self.platform.prepare_render(&ui, window);
         }
-
-        // // Draw windows and GUI elements here
-        // let mut about_open = false;
-        // ui.main_menu_bar(|| {
-        //     ui.menu(imgui::im_str!("Help"), true, || {
-        //         about_open = imgui::MenuItem::new(imgui::im_str!("About...")).build(&ui);
-        //     });
-        // });
-        // if about_open {
-        //     self.about_open = true;
-        // }
-
-        // if self.about_open {
-        //     ui.show_about_window(&mut self.about_open);
-        // }
 
         // Render Dear ImGui with WGPU
         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -122,7 +104,7 @@ impl Gui {
             depth_stencil_attachment: None,
         });
 
-        (update_world_or_whatever_the_app_wants_xd)(&ui);
+        (render_ui_for_app_elements)(&ui);
 
         self.renderer
             .render(ui.render(), &context.queue, &context.device, &mut rpass)

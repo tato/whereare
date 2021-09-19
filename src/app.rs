@@ -42,8 +42,11 @@ pub fn run() -> Result<(), Error> {
 
             let render_result = pixels.render_with(|encoder, render_target, context| {
                 context.scaling_renderer.render(encoder, render_target);
-                let f = |ui: &imgui::Ui| { world.update_on_gui(ui); };
-                gui.render(&window, encoder, render_target, context, f).expect("gui.render() failed");
+                let render_ui_for_app_elements = |ui: &imgui::Ui| {
+                    world.update_on_gui(ui);
+                };
+                gui.render(&window, encoder, render_target, context, render_ui_for_app_elements)
+                    .expect("gui.render() failed");
                 ()
             });
 

@@ -27,26 +27,30 @@ impl World {
 
     pub fn update(&mut self) {}
 
-    pub fn update_on_gui<'me, 'ui>(&'me mut self, ui: &'ui imgui::Ui) where 'me: 'ui {
+    pub fn update_on_gui(&mut self, ui: &imgui::Ui) {
         imgui::Window::new(imgui::im_str!("World"))
             .size([300.0, 110.0], imgui::Condition::FirstUseEver)
             .build(ui, || {
                 let mut updated = false;
-                
-                updated = updated || imgui::Slider::new(imgui::im_str!("Map Width"))
-                    .range(0..=World::WINDOW_WIDTH)
-                    .build(ui, &mut self.map_width);
-                    
-                updated = updated || imgui::Slider::new(imgui::im_str!("Map Height"))
-                    .range(0..=World::WINDOW_HEIGHT)
-                    .build(ui, &mut self.map_height);
 
-                updated = updated || imgui::Slider::new(imgui::im_str!("Noise Scale"))
-                    .range(0.0..=100.0)
-                    .build(ui, &mut self.noise_scale);
+                updated = updated
+                    || imgui::Slider::new(imgui::im_str!("Map Width"))
+                        .range(0..=World::WINDOW_WIDTH)
+                        .build(ui, &mut self.map_width);
+
+                updated = updated
+                    || imgui::Slider::new(imgui::im_str!("Map Height"))
+                        .range(0..=World::WINDOW_HEIGHT)
+                        .build(ui, &mut self.map_height);
+
+                updated = updated
+                    || imgui::Slider::new(imgui::im_str!("Noise Scale"))
+                        .range(0.0..=100.0)
+                        .build(ui, &mut self.noise_scale);
 
                 if updated {
-                    self.map = WorldMap::generate(self.map_width, self.map_height, self.noise_scale);
+                    self.map =
+                        WorldMap::generate(self.map_width, self.map_height, self.noise_scale);
                 }
             });
     }
@@ -54,7 +58,7 @@ impl World {
     pub fn draw(&self, frame: &mut [u8]) {
         let map_start_x = (Self::WINDOW_WIDTH - self.map_width) / 2;
         let map_start_y = (Self::WINDOW_HEIGHT - self.map_height) / 2;
-        
+
         for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
             let x = i as u32 % Self::WINDOW_WIDTH;
             let y = i as u32 / Self::WINDOW_WIDTH;
