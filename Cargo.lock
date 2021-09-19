@@ -1266,22 +1266,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "profeta"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "env_logger",
- "imgui",
- "imgui-wgpu",
- "imgui-winit-support",
- "log",
- "noise",
- "pixels",
- "winit",
- "winit_input_helper",
-]
-
-[[package]]
 name = "profiling"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1878,6 +1862,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25feb2fbf24ab3219a9f10890ceb8e1ef02b13314ed89d64a9ae99dcad883e18"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "whereare"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "env_logger",
+ "imgui",
+ "imgui-wgpu",
+ "imgui-winit-support",
+ "log",
+ "noise",
+ "pixels",
+ "winit",
+ "winit_input_helper",
 ]
 
 [[package]]
