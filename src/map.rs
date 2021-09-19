@@ -3,7 +3,7 @@ use noise::{NoiseFn, Perlin};
 pub struct WorldMap {
     width: u32,
     _height: u32,
-    values: Vec<f64>
+    values: Vec<f64>,
 }
 
 impl WorldMap {
@@ -24,7 +24,11 @@ impl WorldMap {
             }
         }
 
-        WorldMap { width, _height: height, values }
+        WorldMap {
+            width,
+            _height: height,
+            values,
+        }
     }
 
     pub fn _width(&self) -> u32 {

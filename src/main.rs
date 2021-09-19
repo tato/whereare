@@ -5,10 +5,12 @@ use anyhow::Error;
 
 /// Window creation, event handling
 mod app;
-/// Global state
-mod world;
+/// IMGUI
+mod gui;
 /// Generate maps
 mod map;
+/// Global state
+mod world;
 
 fn main() -> Result<(), Error> {
     app::run()

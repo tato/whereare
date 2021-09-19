@@ -2,7 +2,7 @@
 name = "profeta"
 version = "0.1.0"
 edition = "2021"
-authors = [ "Pablo Tato Ramos <pabtatoramos@gmail.com>"]
+authors = [ "Pablo Tato Ramos <pabtatoramos@gmail.com>" ]
 
 [dependencies]
 log = "0.4"
@@ -13,5 +13,9 @@ winit = { version="0.25", default-features=false }
 winit_input_helper = "0.10"
 pixels = "0.6"
 noise = "0.7"
+
+imgui = "0.7"
+imgui-wgpu = "0.17"
+imgui-winit-support = { version = "0.7.1", default-features = false, features = [ "winit-25" ] }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
