@@ -3705,17 +3705,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "whereare"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy-inspector-egui",
- "noise",
- "rand 0.7.3",
- "rand_chacha 0.2.2",
-]
-
-[[package]]
 name = "widestring"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3802,6 +3791,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d129932f4644ac2396cb456385cbf9e63b5b30c6e8dc4820bdca4eb082037a5"
 dependencies = [
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "wizard-tower"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy-inspector-egui",
+ "noise",
+ "rand 0.7.3",
+ "rand_chacha 0.2.2",
 ]
 
 [[package]]
