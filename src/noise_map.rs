@@ -8,13 +8,6 @@ pub struct NoiseMap {
 }
 
 impl NoiseMap {
-    pub fn empty() -> NoiseMap {
-        NoiseMap {
-            width: 1,
-            _height: 1,
-            noise_map: vec![0.0],
-        }
-    }
     pub fn generate(
         width: u32,
         height: u32,
