@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use noise::{NoiseFn, Perlin, Seedable};
+use noise::{NoiseFn, OpenSimplex, Seedable};
 use rand::{Rng, SeedableRng};
 pub struct NoiseMap {
     width: u32,
@@ -18,7 +18,7 @@ impl NoiseMap {
         lacunarity: f64,
         offset: Vec2,
     ) -> NoiseMap {
-        let perlin = Perlin::new().set_seed(seed);
+        let simplex = OpenSimplex::new().set_seed(seed);
         let mut prng = rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(seed));
 
         let octave_offsets: Vec<Vec2> = (0..octaves)
@@ -47,7 +47,7 @@ impl NoiseMap {
                     let x = x as f64 / scale * frequency + octave_offsets[i as usize].x as f64;
                     let y = y as f64 / scale * frequency + octave_offsets[i as usize].y as f64;
 
-                    let perlin_value = perlin.get([x as f64, y as f64]) * 2.0 - 1.0;
+                    let perlin_value = simplex.get([x as f64, y as f64]) * 2.0 - 1.0;
                     noise_height += perlin_value * amplitude;
 
                     amplitude *= persistance;
@@ -66,7 +66,7 @@ impl NoiseMap {
 
         for val in &mut noise_map {
             // normalize
-            *val = (*val - min_noise_height) / (max_noise_height - min_noise_height)
+            *val = (*val - min_noise_height) / (max_noise_height - min_noise_height);
         }
 
         NoiseMap {
@@ -88,3 +88,4 @@ impl NoiseMap {
         self.noise_map[(y * self.width + x) as usize]
     }
 }
+

@@ -84,7 +84,7 @@ fn get_texture_from_map_generator(generator: &MapGenerator) -> Texture {
         mag_filter: bevy::render::texture::FilterMode::Linear,
         ..Default::default()
     };
-    
+
     texture
 }
 
@@ -113,9 +113,12 @@ fn add_noise_map(
         });
 }
 
-fn update_noise_map(generator: Res<MapGenerator>, mut query: Query<&mut Handle<ColorMaterial>, With<NoiseMapSprite>>, 
-mut textures: ResMut<Assets<Texture>>,
-mut materials: ResMut<Assets<ColorMaterial>>,) {
+fn update_noise_map(
+    generator: Res<MapGenerator>,
+    mut query: Query<&mut Handle<ColorMaterial>, With<NoiseMapSprite>>,
+    mut textures: ResMut<Assets<Texture>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     if generator.is_changed() {
         for mut material in query.iter_mut() {
             let texture = get_texture_from_map_generator(&generator);
