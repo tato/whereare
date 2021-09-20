@@ -33,19 +33,22 @@ impl NoiseMap {
             scale = 0.0001;
         }
 
+        let half_width = width as f64 / 2.0;
+        let half_height = height as f64 / 2.0;
+
         let mut max_noise_height = f64::MIN;
         let mut min_noise_height = f64::MAX;
 
         let mut noise_map = vec![0.0; (width * height) as usize];
-        for y in 0..height {
-            for x in 0..width {
+        for y in 0..i64::from(height) {
+            for x in 0..i64::from(width) {
                 let mut amplitude = 1.0;
                 let mut frequency = 1.0;
                 let mut noise_height = 0.0;
 
                 for i in 0..octaves {
-                    let x = x as f64 / scale * frequency + octave_offsets[i as usize].x as f64;
-                    let y = y as f64 / scale * frequency + octave_offsets[i as usize].y as f64;
+                    let x = (x as f64 -half_width) / scale * frequency + octave_offsets[i as usize].x as f64;
+                    let y = (y as f64-half_height) / scale * frequency + octave_offsets[i as usize].y as f64;
 
                     let perlin_value = simplex.get([x as f64, y as f64]) * 2.0 - 1.0;
                     noise_height += perlin_value * amplitude;
@@ -60,13 +63,14 @@ impl NoiseMap {
                     min_noise_height = noise_height;
                 }
 
-                noise_map[(y * width + x) as usize] = noise_height;
+                noise_map[(y * i64::from(width) + x) as usize] = noise_height;
             }
         }
 
         for val in &mut noise_map {
             // normalize
             *val = (*val - min_noise_height) / (max_noise_height - min_noise_height);
+            // *val = 1.0 - *val;
         }
 
         NoiseMap {

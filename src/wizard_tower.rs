@@ -46,7 +46,11 @@ impl Default for MapGenerator {
 
 struct NoiseMapSprite;
 
-fn get_texture_from_map_generator(generator: &MapGenerator) -> Texture {
+fn validate_map_generator_then_get_texture(generator: &mut MapGenerator) -> Texture {
+    generator.map_size = generator.map_size.max(1);
+    generator.lacunarity = generator.lacunarity.max(1.0);
+    generator.persistance = generator.persistance.max(0.0).min(1.0);
+
     let noise_map = NoiseMap::generate(
         generator.map_size,
         generator.map_size,
@@ -90,11 +94,11 @@ fn get_texture_from_map_generator(generator: &MapGenerator) -> Texture {
 
 fn add_noise_map(
     mut commands: Commands,
-    generator: Res<MapGenerator>,
+    mut generator: ResMut<MapGenerator>,
     mut textures: ResMut<Assets<Texture>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let texture = get_texture_from_map_generator(&generator);
+    let texture = validate_map_generator_then_get_texture(&mut generator);
 
     let texture_handle = textures.add(texture);
 
@@ -114,14 +118,14 @@ fn add_noise_map(
 }
 
 fn update_noise_map(
-    generator: Res<MapGenerator>,
+    mut generator: ResMut<MapGenerator>,
     mut query: Query<&mut Handle<ColorMaterial>, With<NoiseMapSprite>>,
     mut textures: ResMut<Assets<Texture>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if generator.is_changed() {
         for mut material in query.iter_mut() {
-            let texture = get_texture_from_map_generator(&generator);
+            let texture = validate_map_generator_then_get_texture(&mut generator);
             let texture_handle = textures.add(texture);
             *material = materials.add(texture_handle.into());
         }
