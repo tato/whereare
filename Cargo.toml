@@ -5,20 +5,12 @@ edition = "2021"
 authors = [ "Pablo Tato Ramos <pabtatoramos@gmail.com>" ]
 
 [dependencies]
-log = "0.4"
-env_logger = "0.9"
-anyhow = "1.0"
+# anyhow = "1.0"
+bevy = "0.5"
+bevy-inspector-egui = "0.6"
 
-winit = { version="0.25", default-features=false }
-winit_input_helper = "0.10"
-pixels = "0.6"
-noise = "0.7"
-glam = "0.18"
 rand = "0.7"
 rand_chacha = "0.2"
-
-imgui = "0.7"
-imgui-wgpu = "0.17"
-imgui-winit-support = { version = "0.7.1", default-features = false, features = [ "winit-25" ] }
+noise = "0.7"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

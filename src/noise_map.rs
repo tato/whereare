@@ -1,13 +1,20 @@
-use glam::{IVec2, Vec2};
+use bevy::prelude::*;
 use noise::{NoiseFn, Perlin, Seedable};
 use rand::{Rng, SeedableRng};
-pub struct WorldMap {
+pub struct NoiseMap {
     width: u32,
     _height: u32,
     noise_map: Vec<f64>,
 }
 
-impl WorldMap {
+impl NoiseMap {
+    pub fn empty() -> NoiseMap {
+        NoiseMap {
+            width: 1,
+            _height: 1,
+            noise_map: vec![0.0],
+        }
+    }
     pub fn generate(
         width: u32,
         height: u32,
@@ -17,15 +24,17 @@ impl WorldMap {
         persistance: f64,
         lacunarity: f64,
         offset: Vec2,
-    ) -> WorldMap {
+    ) -> NoiseMap {
         let perlin = Perlin::new().set_seed(seed);
         let mut prng = rand_chacha::ChaCha8Rng::seed_from_u64(u64::from(seed));
-        
-        let octave_offsets: Vec<Vec2> = (0..octaves).map(|_i| {
-            let offset_x = prng.gen_range(-100000.0, 100000.0) + offset.x;
-            let offset_y = prng.gen_range(-100000.0, 100000.0) + offset.y;
-            Vec2::new(offset_x, offset_y)
-        }).collect();
+
+        let octave_offsets: Vec<Vec2> = (0..octaves)
+            .map(|_i| {
+                let offset_x = prng.gen_range(-100000.0, 100000.0) + offset.x;
+                let offset_y = prng.gen_range(-100000.0, 100000.0) + offset.y;
+                Vec2::new(offset_x, offset_y)
+            })
+            .collect();
 
         if scale <= 0.0 {
             scale = 0.0001;
@@ -67,18 +76,18 @@ impl WorldMap {
             *val = (*val - min_noise_height) / (max_noise_height - min_noise_height)
         }
 
-        WorldMap {
+        NoiseMap {
             width,
             _height: height,
             noise_map,
         }
     }
 
-    pub fn _width(&self) -> u32 {
+    pub fn width(&self) -> u32 {
         self.width
     }
 
-    pub fn _height(&self) -> u32 {
+    pub fn height(&self) -> u32 {
         self._height
     }
 
