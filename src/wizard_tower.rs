@@ -113,11 +113,11 @@ fn add_noise_map(
         });
 }
 
-fn update_noise_map(generator: Res<MapGenerator>, mut query: Query<(&NoiseMapSprite, &mut Handle<ColorMaterial>)>, 
+fn update_noise_map(generator: Res<MapGenerator>, mut query: Query<&mut Handle<ColorMaterial>, With<NoiseMapSprite>>, 
 mut textures: ResMut<Assets<Texture>>,
 mut materials: ResMut<Assets<ColorMaterial>>,) {
     if generator.is_changed() {
-        for (_, mut material) in query.iter_mut() {
+        for mut material in query.iter_mut() {
             let texture = get_texture_from_map_generator(&generator);
             let texture_handle = textures.add(texture);
             *material = materials.add(texture_handle.into());
