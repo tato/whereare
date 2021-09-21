@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use wizard_tower::WizardTowerPlugin;
 
 mod noise_map;
+mod map_generator;
 mod wizard_tower;
 
 fn main() {
