@@ -13,14 +13,14 @@ pub struct MapGenerator {
     persistance: f64,
     lacunarity: f64,
     offset: Vec2,
-    regions: Vec<TerrainType>,
     draw_mode: DrawMode,
+    regions: Vec<TerrainType>,
 }
 
 impl Default for MapGenerator {
     fn default() -> Self {
         Self {
-            map_size: 100,
+            map_size: 128,
             seed: "wizard tower".to_string(),
             noise_scale: 27.0,
             octaves: 4,
@@ -30,14 +30,29 @@ impl Default for MapGenerator {
             regions: vec![
                 TerrainType {
                     name: "Water".into(),
-                    height: 0.4,
+                    height: 0.1,
                     color: Color::BLUE,
                 },
                 TerrainType {
-                    name: "Land".into(),
-                    height: 1.0,
+                    name: "Sand".into(),
+                    height: 0.15,
+                    color: Color::YELLOW,
+                },
+                TerrainType {
+                    name: "Grass".into(),
+                    height: 0.60,
                     color: Color::GREEN,
-                }
+                },
+                TerrainType {
+                    name: "Mountain".into(),
+                    height: 0.95,
+                    color: Color::MAROON,
+                },
+                TerrainType {
+                    name: "Peak".into(),
+                    height: 1.00,
+                    color: Color::WHITE,
+                },
             ],
             draw_mode: DrawMode::NoiseMap,
         }
@@ -52,7 +67,7 @@ impl MapGenerator {
         generator.lacunarity = generator.lacunarity.max(1.0);
         generator.persistance = generator.persistance.max(0.0).min(1.0);
     
-        let noise_map = noise_map::generate(
+        let mut noise_map = noise_map::generate(
             generator.map_size,
             generator.map_size,
             calculate_u32_seed_from_str(&generator.seed),
@@ -65,6 +80,29 @@ impl MapGenerator {
 
         let width = generator.map_size;
         let height = generator.map_size;
+
+        let radius = width.min(height) as f64 / 2.0;
+        let dmz_radius = radius * 1.0 / 4.0;
+
+        let center = UVec2::new(width / 2, height / 2).as_f64();
+        for y in 0..height {
+            for x in 0..width {
+                let point = UVec2::new(x, y).as_f64();
+                let distance = (center - point).length();
+
+                let the_difference = if distance >= radius {
+                    1.0
+                } else if distance <= dmz_radius {
+                    0.0
+                } else {
+                    (distance - dmz_radius) / (radius - dmz_radius)
+                };
+                let the_difference = 1.0 - the_difference;
+
+                let i = (y * width + x) as usize;
+                noise_map[i] = noise_map[i] * the_difference;
+            }
+        }
 
         match generator.draw_mode {
             DrawMode::NoiseMap => get_texture_for_height_map(&noise_map, width, height),
@@ -113,7 +151,7 @@ fn get_texture_for_color_map(color_map: &[Color], width: u32, height: u32) -> Te
         Extent3d::new(width as u32, height as u32, 1),
         TextureDimension::D2,
         colors,
-        TextureFormat::Rgba8Unorm,
+        TextureFormat::Rgba8UnormSrgb,
     );
     texture.sampler = SamplerDescriptor {
         address_mode_u: bevy::render::texture::AddressMode::ClampToEdge,
