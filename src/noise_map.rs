@@ -41,8 +41,10 @@ pub fn generate(
             let mut noise_height = 0.0;
 
             for i in 0..octaves {
-                let x = (x as f64 -half_width) / scale * frequency + octave_offsets[i as usize].x as f64;
-                let y = (y as f64-half_height) / scale * frequency + octave_offsets[i as usize].y as f64;
+                let x = (x as f64 - half_width) / scale * frequency
+                    + octave_offsets[i as usize].x as f64;
+                let y = (y as f64 - half_height) / scale * frequency
+                    + octave_offsets[i as usize].y as f64;
 
                 let simplex_value = simplex.get([x as f64, y as f64]) * 2.0 - 1.0;
                 noise_height += simplex_value * amplitude;

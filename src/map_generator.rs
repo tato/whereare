@@ -1,10 +1,8 @@
-
-use bevy::{prelude::*, render::texture::{SamplerDescriptor}};
-use bevy_inspector_egui::{Inspectable};
+use bevy::{prelude::*, render::texture::SamplerDescriptor};
+use bevy_egui::{egui, EguiContext};
 
 use crate::noise_map;
 
-#[derive(Inspectable)]
 pub struct MapGenerator {
     map_size: u32,
     seed: String,
@@ -15,6 +13,9 @@ pub struct MapGenerator {
     offset: Vec2,
     draw_mode: DrawMode,
     regions: Vec<TerrainType>,
+
+    changed: bool,
+    cached_texture: Handle<Texture>,
 }
 
 impl Default for MapGenerator {
@@ -29,57 +30,62 @@ impl Default for MapGenerator {
             offset: Vec2::ZERO,
             regions: vec![
                 TerrainType {
-                    name: "Water".into(),
+                    _name: "Water".into(),
                     height: 0.1,
                     color: Color::BLUE,
                 },
                 TerrainType {
-                    name: "Sand".into(),
+                    _name: "Sand".into(),
                     height: 0.15,
                     color: Color::YELLOW,
                 },
                 TerrainType {
-                    name: "Grass".into(),
+                    _name: "Grass".into(),
                     height: 0.60,
                     color: Color::GREEN,
                 },
                 TerrainType {
-                    name: "Mountain".into(),
+                    _name: "Mountain".into(),
                     height: 0.95,
                     color: Color::MAROON,
                 },
                 TerrainType {
-                    name: "Peak".into(),
+                    _name: "Peak".into(),
                     height: 1.00,
                     color: Color::WHITE,
                 },
             ],
             draw_mode: DrawMode::NoiseMap,
+
+            changed: false,
+            cached_texture: Handle::default(),
         }
     }
 }
 
 impl MapGenerator {
-    pub fn validate_then_get_texture(&mut self) -> Texture {
-        let generator = self;
+    pub fn validate_then_get_texture(&mut self, textures: &mut Assets<Texture>) -> Handle<Texture> {
+        if self.changed {
+            return self.cached_texture.clone();
+        }
 
-        generator.map_size = generator.map_size.max(1);
-        generator.lacunarity = generator.lacunarity.max(1.0);
-        generator.persistance = generator.persistance.max(0.0).min(1.0);
-    
+        self.map_size = self.map_size.max(1);
+        self.lacunarity = self.lacunarity.max(1.0);
+        self.persistance = self.persistance.max(0.0).min(1.0);
+
         let mut noise_map = noise_map::generate(
-            generator.map_size,
-            generator.map_size,
-            calculate_u32_seed_from_str(&generator.seed),
-            generator.noise_scale,
-            generator.octaves,
-            generator.persistance,
-            generator.lacunarity,
-            generator.offset,
+            self.map_size,
+            self.map_size,
+            calculate_u32_seed_from_str(&self.seed),
+            self.noise_scale,
+            self.octaves,
+            self.persistance,
+            self.lacunarity,
+            self.offset,
         );
 
-        let width = generator.map_size;
-        let height = generator.map_size;
+        let width = self.map_size;
+        let height = self.map_size;
 
         let radius = width.min(height) as f64 / 2.0;
         let dmz_radius = radius * 1.0 / 4.0;
@@ -104,36 +110,94 @@ impl MapGenerator {
             }
         }
 
-        match generator.draw_mode {
+        let texture = match self.draw_mode {
             DrawMode::NoiseMap => get_texture_for_height_map(&noise_map, width, height),
             DrawMode::ColorMap => {
-                let noise_map_colors: Vec<_> = noise_map.iter().map(|current_height| {
-                    for region in &generator.regions {
-                        if *current_height < region.height {
-                            return region.color;
+                let noise_map_colors: Vec<_> = noise_map
+                    .iter()
+                    .map(|current_height| {
+                        for region in &self.regions {
+                            if *current_height < region.height {
+                                return region.color;
+                            }
                         }
-                    }
-                    Color::BLACK
-                }).collect();
+                        Color::BLACK
+                    })
+                    .collect();
 
-                get_texture_for_color_map(&noise_map_colors, width, height) 
+                get_texture_for_color_map(&noise_map_colors, width, height)
             }
-        }
+        };
+
+        let texture_handle = textures.add(texture);
+        self.cached_texture = texture_handle.clone();
+
+        texture_handle
+    }
+
+    pub fn update_map_generator(
+        mut generator: ResMut<MapGenerator>,
+        egui_context: ResMut<EguiContext>,
+    ) {
+        use egui::widgets::DragValue;
+
+        let mut changed = false;
+
+        egui::Window::new("Map Generator").show(egui_context.ctx(), |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Seed");
+                changed = changed || ui.text_edit_singleline(&mut generator.seed).changed();
+            });
+            ui.horizontal(|ui| {
+                ui.label("Offset");
+                changed = changed || ui.add(DragValue::new(&mut generator.offset.x)).changed();
+                changed = changed || ui.add(DragValue::new(&mut generator.offset.y)).changed();
+            });
+            egui::CollapsingHeader::new("Noise Map Characteristics")
+                .default_open(false)
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Map Size");
+                        changed = changed || ui.add(DragValue::new(&mut generator.map_size)).changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Noise Scale");
+                        changed = changed || ui.add(DragValue::new(&mut generator.noise_scale)).changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Octaves");
+                        changed = changed || ui.add(DragValue::new(&mut generator.octaves)).changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Persistance");
+                        changed = changed || ui.add(DragValue::new(&mut generator.persistance)).changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Lacunarity");
+                        changed = changed || ui.add(DragValue::new(&mut generator.lacunarity)).changed();
+                    });
+                });
+        });
+
+        generator.changed = changed;
     }
 }
 
 fn get_texture_for_height_map(height_map: &[f64], width: u32, height: u32) -> Texture {
-    let height_map_colors: Vec<_> = height_map.iter().map(|height| {
-        let height = *height as f32;
-        Color::rgba(height, height, height, 1.0)
-    }).collect();
+    let height_map_colors: Vec<_> = height_map
+        .iter()
+        .map(|height| {
+            let height = *height as f32;
+            Color::rgba(height, height, height, 1.0)
+        })
+        .collect();
 
     get_texture_for_color_map(&height_map_colors, width, height)
 }
 
 fn get_texture_for_color_map(color_map: &[Color], width: u32, height: u32) -> Texture {
     use bevy::render::texture::{Extent3d, TextureDimension, TextureFormat};
-    
+
     let colors_capacity = (width * height * 4) as usize;
     let mut colors = Vec::with_capacity(colors_capacity);
 
@@ -164,23 +228,25 @@ fn get_texture_for_color_map(color_map: &[Color], width: u32, height: u32) -> Te
     texture
 }
 
-#[derive(Inspectable)]
 struct TerrainType {
-    name: String,
+    _name: String,
     height: f64,
-    color: Color, 
+    color: Color,
 }
 
 impl Default for TerrainType {
     fn default() -> Self {
-        Self { name: Default::default(), height: Default::default(), color: Default::default() }
+        Self {
+            _name: Default::default(),
+            height: Default::default(),
+            color: Default::default(),
+        }
     }
 }
 
-
-#[derive(Inspectable)]
 enum DrawMode {
-    NoiseMap, ColorMap
+    NoiseMap,
+    ColorMap,
 }
 
 impl Default for DrawMode {
@@ -194,7 +260,7 @@ fn calculate_u32_seed_from_str(seed: &str) -> u32 {
         collections::hash_map::DefaultHasher,
         hash::{Hash, Hasher},
     };
-    
+
     let mut s = DefaultHasher::new();
     seed.hash(&mut s);
     (s.finish() % u64::from(u32::MAX)) as u32

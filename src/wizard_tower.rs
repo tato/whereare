@@ -1,17 +1,28 @@
-use bevy::{prelude::*};
-use bevy_inspector_egui::{InspectorPlugin};
+use bevy::prelude::*;
 
 use crate::map_generator::MapGenerator;
 
-
 pub struct WizardTowerPlugin;
+
+#[derive(SystemLabel, Clone, Hash, Debug, Eq, PartialEq)]
+enum WizardTowerSystem {
+    UpdateMapGenerator,
+}
 
 impl Plugin for WizardTowerPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.insert_resource(MapGenerator::default())
-            .add_plugin(InspectorPlugin::<MapGenerator>::new())
             .add_startup_system(add_noise_map.system())
-            .add_system(update_noise_map.system());
+            .add_system(
+                MapGenerator::update_map_generator
+                    .system()
+                    .label(WizardTowerSystem::UpdateMapGenerator),
+            )
+            .add_system(
+                update_noise_map
+                    .system()
+                    .after(WizardTowerSystem::UpdateMapGenerator),
+            );
     }
 }
 struct NoiseMapSprite;
@@ -22,9 +33,7 @@ fn add_noise_map(
     mut textures: ResMut<Assets<Texture>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let texture = generator.validate_then_get_texture();
-
-    let texture_handle = textures.add(texture);
+    let texture_handle = generator.validate_then_get_texture(&mut textures);
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands
@@ -47,11 +56,8 @@ fn update_noise_map(
     mut textures: ResMut<Assets<Texture>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if generator.is_changed() {
-        for mut material in query.iter_mut() {
-            let texture = generator.validate_then_get_texture();
-            let texture_handle = textures.add(texture);
-            *material = materials.add(texture_handle.into());
-        }
+    for mut material in query.iter_mut() {
+        let texture_handle = generator.validate_then_get_texture(&mut textures);
+        *material = materials.add(texture_handle.into());
     }
 }
