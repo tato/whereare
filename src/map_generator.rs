@@ -1,5 +1,8 @@
 use bevy::{prelude::*, render::texture::SamplerDescriptor};
-use bevy_egui::{egui, EguiContext};
+use bevy_egui::{
+    egui::{self, ComboBox},
+    EguiContext,
+};
 
 use crate::noise_map;
 
@@ -21,9 +24,9 @@ pub struct MapGenerator {
 impl Default for MapGenerator {
     fn default() -> Self {
         Self {
-            map_size: 128,
+            map_size: 256,
             seed: "wizard tower".to_string(),
-            noise_scale: 27.0,
+            noise_scale: 50.0,
             octaves: 4,
             persistance: 0.5,
             lacunarity: 2.0,
@@ -31,22 +34,22 @@ impl Default for MapGenerator {
             regions: vec![
                 TerrainType {
                     _name: "Water".into(),
-                    height: 0.1,
+                    height: 0.5,
                     color: Color::BLUE,
                 },
                 TerrainType {
                     _name: "Sand".into(),
-                    height: 0.15,
+                    height: 0.55,
                     color: Color::YELLOW,
                 },
                 TerrainType {
                     _name: "Grass".into(),
-                    height: 0.60,
+                    height: 0.80,
                     color: Color::GREEN,
                 },
                 TerrainType {
                     _name: "Mountain".into(),
-                    height: 0.95,
+                    height: 0.90,
                     color: Color::MAROON,
                 },
                 TerrainType {
@@ -57,23 +60,15 @@ impl Default for MapGenerator {
             ],
             draw_mode: DrawMode::NoiseMap,
 
-            changed: false,
+            changed: true,
             cached_texture: Handle::default(),
         }
     }
 }
 
 impl MapGenerator {
-    pub fn validate_then_get_texture(&mut self, textures: &mut Assets<Texture>) -> Handle<Texture> {
-        if self.changed {
-            return self.cached_texture.clone();
-        }
-
-        self.map_size = self.map_size.max(1);
-        self.lacunarity = self.lacunarity.max(1.0);
-        self.persistance = self.persistance.max(0.0).min(1.0);
-
-        let mut noise_map = noise_map::generate(
+    fn generate_noise_map(&self) -> Vec<f64> {
+        noise_map::generate(
             self.map_size,
             self.map_size,
             calculate_u32_seed_from_str(&self.seed),
@@ -82,33 +77,45 @@ impl MapGenerator {
             self.persistance,
             self.lacunarity,
             self.offset,
-        );
+        )
+    }
+
+    pub fn validate_then_get_texture(&mut self, textures: &mut Assets<Texture>) -> Handle<Texture> {
+        if !self.changed {
+            return self.cached_texture.clone();
+        }
+
+        self.map_size = self.map_size.max(1);
+        self.lacunarity = self.lacunarity.max(1.0);
+        self.persistance = self.persistance.max(0.0).min(1.0);
+
+        let noise_map = self.generate_noise_map();
 
         let width = self.map_size;
         let height = self.map_size;
 
-        let radius = width.min(height) as f64 / 2.0;
-        let dmz_radius = radius * 1.0 / 4.0;
+        // let radius = width.min(height) as f64 / 2.0;
+        // let dmz_radius = radius * 1.0 / 4.0;
 
-        let center = UVec2::new(width / 2, height / 2).as_f64();
-        for y in 0..height {
-            for x in 0..width {
-                let point = UVec2::new(x, y).as_f64();
-                let distance = (center - point).length();
+        // let center = UVec2::new(width / 2, height / 2).as_f64();
+        // for y in 0..height {
+        //     for x in 0..width {
+        //         let point = UVec2::new(x, y).as_f64();
+        //         let distance = (center - point).length();
 
-                let the_difference = if distance >= radius {
-                    1.0
-                } else if distance <= dmz_radius {
-                    0.0
-                } else {
-                    (distance - dmz_radius) / (radius - dmz_radius)
-                };
-                let the_difference = 1.0 - the_difference;
+        //         let the_difference = if distance >= radius {
+        //             1.0
+        //         } else if distance <= dmz_radius {
+        //             0.0
+        //         } else {
+        //             (distance - dmz_radius) / (radius - dmz_radius)
+        //         };
+        //         let the_difference = 1.0 - the_difference;
 
-                let i = (y * width + x) as usize;
-                noise_map[i] = noise_map[i] * the_difference;
-            }
-        }
+        //         let i = (y * width + x) as usize;
+        //         noise_map[i] = noise_map[i] * the_difference;
+        //     }
+        // }
 
         let texture = match self.draw_mode {
             DrawMode::NoiseMap => get_texture_for_height_map(&noise_map, width, height),
@@ -131,6 +138,7 @@ impl MapGenerator {
 
         let texture_handle = textures.add(texture);
         self.cached_texture = texture_handle.clone();
+        self.changed = false;
 
         texture_handle
     }
@@ -158,28 +166,60 @@ impl MapGenerator {
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.label("Map Size");
-                        changed = changed || ui.add(DragValue::new(&mut generator.map_size)).changed();
+                        changed =
+                            changed || ui.add(DragValue::new(&mut generator.map_size)).changed();
                     });
                     ui.horizontal(|ui| {
                         ui.label("Noise Scale");
-                        changed = changed || ui.add(DragValue::new(&mut generator.noise_scale)).changed();
+                        changed =
+                            changed || ui.add(DragValue::new(&mut generator.noise_scale)).changed();
                     });
                     ui.horizontal(|ui| {
                         ui.label("Octaves");
-                        changed = changed || ui.add(DragValue::new(&mut generator.octaves)).changed();
+                        changed =
+                            changed || ui.add(DragValue::new(&mut generator.octaves)).changed();
                     });
                     ui.horizontal(|ui| {
                         ui.label("Persistance");
-                        changed = changed || ui.add(DragValue::new(&mut generator.persistance)).changed();
+                        changed =
+                            changed || ui.add(DragValue::new(&mut generator.persistance)).changed();
                     });
                     ui.horizontal(|ui| {
                         ui.label("Lacunarity");
-                        changed = changed || ui.add(DragValue::new(&mut generator.lacunarity)).changed();
+                        changed =
+                            changed || ui.add(DragValue::new(&mut generator.lacunarity)).changed();
                     });
                 });
+
+            ui.horizontal(|ui| {
+                ui.label("Draw Mode");
+                ComboBox::from_label("Hey!")
+                    .selected_text(format!("{:?}", generator.draw_mode))
+                    .show_ui(ui, |ui| {
+                        changed = changed || ui.selectable_value(
+                            &mut generator.draw_mode,
+                            DrawMode::NoiseMap,
+                            "NoiseMap",
+                        ).changed();
+                        changed = changed || ui.selectable_value(
+                            &mut generator.draw_mode,
+                            DrawMode::ColorMap,
+                            "ColorMap",
+                        ).changed();
+                    });
+            });
+
+            if ui.button("Find Shape").clicked() {
+                generator.find_shape();
+            }
         });
 
         generator.changed = changed;
+    }
+
+    fn find_shape(&mut self) {
+        let noise_map = self.generate_noise_map();
+        self.changed = false;
     }
 }
 
@@ -244,6 +284,7 @@ impl Default for TerrainType {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 enum DrawMode {
     NoiseMap,
     ColorMap,
